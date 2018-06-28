@@ -1,0 +1,29 @@
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: traefik-etcd-config
+  namespace: kube-system
+spec:
+  backoffLimit: 1
+  activeDeadlineSeconds: 100
+  template:
+    metadata:
+      name: traefik-etcd-config
+    spec:
+      containers:
+      - name: storeconfig
+        image: traefik:alpine
+        imagePullPolicy: IfNotPresent
+        command: ["traefik"]
+        args: [ "storeconfig", "-c", "/etc/traefik/traefik.toml", "--etcd.endpoint=etcd-cluster.etcd-operator:2379", "--etcd.useAPIV3=true", "--etcd.prefix=/traefik"]
+        volumeMounts:
+        - name: config
+          mountPath: /etc/traefik
+          readOnly: true
+      restartPolicy: Never
+      volumes:
+      - name: config
+        configMap:
+          defaultMode: 0600
+          name: traefik-external-ingress-proxy-config

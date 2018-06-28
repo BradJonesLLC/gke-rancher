@@ -1,0 +1,136 @@
+---
+kind: Namespace
+apiVersion: v1
+metadata:
+  name: cattle-system
+---
+kind: ServiceAccount
+apiVersion: v1
+metadata:
+  name: cattle-admin
+  namespace: cattle-system
+---
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: cattle-system
+  name: cattle-service
+  labels:
+    app: cattle
+spec:
+  ports:
+  - port: 80
+    targetPort: 80
+    protocol: TCP
+    name: http
+  - port: 443
+    targetPort: 443
+    protocol: TCP
+    name: https
+  selector:
+    app: cattle
+  type: LoadBalancer
+  externalTrafficPolicy: Local
+---
+kind: Deployment
+apiVersion: extensions/v1beta1
+metadata:
+  namespace: cattle-system
+  name: cattle
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: cattle
+    spec:
+      serviceAccountName: cattle-admin
+      containers:
+      - image: rancher/rancher:v2.0.4
+        command:
+        - rancher
+        - --no-cacerts
+        - --http-listen-port=80
+        imagePullPolicy: Always
+        name: cattle-server
+        env:
+        - name: CATTLE_SERVER_URL
+          value: rancher.cloud.brjllc.net
+        ports:
+        - containerPort: 80
+          protocol: TCP
+        - containerPort: 443
+          protocol: TCP
+      volumes:
+      - name: cattle-keys-volume
+        secret:
+          defaultMode: 420
+          secretName: cattle-keys-server
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: traefik-ingress-controller
+  namespace: kube-system
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: traefik-ingress-service
+  namespace: kube-system
+spec:
+  selector:
+    k8s-app: traefik-ingress-lb
+  ports:
+    - protocol: TCP
+      port: 80
+      name: http
+    - protocol: TCP
+      port: 443
+      name: https
+  type: LoadBalancer
+  externalTrafficPolicy: Local
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: cattle-keys-server
+  namespace: cattle-system
+type: Opaque
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: traefik-external-ingress-proxy-config
+  namespace: kube-system
+data:
+  traefik.toml: |-
+    defaultEntryPoints = ["http", "https"]
+    [entryPoints]
+      [entryPoints.http]
+        address = ":80"
+        compress = true
+      [entryPoints.http.redirect]
+        entryPoint = "https"
+      [entryPoints.https]
+        address = ":443"
+      [entryPoints.https.tls]
+    [acme]
+      email = "hostmaster+k8s@bradjonesllc.com"
+      storage = "/traefik/acme/account"
+      entryPoint = "https"
+      onHostRule = true
+      acmeLogging = true
+      #caServer = "https://acme-v02.api.letsencrypt.org/directory"
+      caServer = "https://acme-staging-v02.api.letsencrypt.org/directory"
+      [acme.httpChallenge]
+        entryPoint = "http"
+    [etcd]
+      endpoint = "etcd-cluster.etcd-operator:2379"
+      useAPIV3 = true
+    [web]
+      address = ":8080"
+      readOnly = true
+      # enable basic authentication
+      #  [web.auth.basic]
+      #    users = ["myuser:$apr1$k2qslCn6$0OgA8vhnyC8nJ99YfJMOM/"]
