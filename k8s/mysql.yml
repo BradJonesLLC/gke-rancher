@@ -1,0 +1,53 @@
+---
+kind: Namespace
+apiVersion: v1
+metadata:
+  name: mysql
+---
+apiVersion: extensions/v1beta1
+kind: DaemonSet
+metadata:
+  name: proxy
+  namespace: mysql
+spec:
+  template:
+    metadata:
+      labels:
+        app: cloudsqlproxy
+    spec:
+      containers:
+      - image: b.gcr.io/cloudsql-docker/gce-proxy:1.11
+        imagePullPolicy: Always
+        name: cloudsqlproxy
+        command:
+        - /cloud_sql_proxy
+        - -dir=/cloudsql
+        - -instances=<instancename>=tcp:0.0.0.0:3306
+        - -credential_file=/credentials/credentials.json
+        ports:
+        - name: port-database
+          containerPort: 3306
+        volumeMounts:
+        - mountPath: /credentials
+          name: service-account-token
+      volumes:
+      - name: cloudsql
+        emptyDir:
+      - name: service-account-token
+        secret:
+          secretName: service-account-token
+---
+apiVersion: extensions/v1beta1
+kind: NetworkPolicy
+metadata:
+  name: mysql-all
+  namespace: mysql
+spec:
+  ingress:
+  - {}
+  podSelector:
+    matchLabels:
+      app: cloudsqlproxy
+  - namespaceSelector: {}
+  policyTypes:
+  - Ingress
