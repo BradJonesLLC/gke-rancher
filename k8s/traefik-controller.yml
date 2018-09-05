@@ -20,7 +20,7 @@ spec:
       terminationGracePeriodSeconds: 60
       containers:
       - image: traefik:alpine
-        args: ["--kubernetes", "--etcd.endpoint=etcd-cluster-client.etcd-operator:2379", "--etcd.useAPIV3=true", "--etcd.prefix=/traefik"]
+        args: ["--kubernetes", "--etcd.endpoint=traefik-etcd-cluster-client.etcd-operator:2379", "--etcd.useAPIV3=true", "--etcd.prefix=/traefik"]
         name: traefik-ingress-lb
         ports:
         - name: http

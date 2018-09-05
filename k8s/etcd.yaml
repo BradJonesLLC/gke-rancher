@@ -2,8 +2,18 @@
 apiVersion: "etcd.database.coreos.com/v1beta2"
 kind: "EtcdCluster"
 metadata:
-  name: "etcd-cluster"
+  name: "traefik-etcd-cluster"
   namespace: etcd-operator
 spec:
   size: 3
+  pod:
+    affinity:
+      podAntiAffinity:
+        requiredDuringSchedulingIgnoredDuringExecution:
+        - labelSelector:
+            matchExpressions:
+            - key: etcd_cluster
+              operator: In
+              values: ["traefik-etcd-cluster"]
+          topologyKey: kubernetes.io/hostname
 version: "3.2.13"

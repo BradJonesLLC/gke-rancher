@@ -27,7 +27,7 @@ data:
       [acme.httpChallenge]
         entryPoint = "http"
     [etcd]
-      endpoint = "etcd-cluster-client.etcd-operator:2379"
+      endpoint = "traefik-etcd-cluster-client.etcd-operator:2379"
       useAPIV3 = true
 ---
 apiVersion: batch/v1
