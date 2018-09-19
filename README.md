@@ -40,6 +40,9 @@ etcd store.
     kubectl config set-context <context name> --user=<credentialname> --cluster=<full GKE cluster name>
     kubectl --context=<context name> apply -f k8s/cluster-admin.yml
     ```
+   Where `<full GKE cluster name>` is the name key of the cluster
+   entry in your `~/.kube/config` file, in the rough format of
+   `gke_PROJECTNAME_ZONE|REGION_CLUSTERNAME`.
 1. Create the etcd operator (supervisor) and some basic cluster
     configuration: `kubectl apply -f k8s/cluster.yml`.
 1. Create the [etcd cluster](https://docs.traefik.io/user-guide/kv-config/)
