@@ -53,6 +53,11 @@ etcd store.
     `kubectl apply -f k8s/cluster.yml`. If you wish to use a
     previously-reserved static IP, specify `loadBalancerIP`
     in the [service spec](https://kubernetes.io/docs/concepts/services-networking/service/#loadbalancer).
+    1. If you did not use a previously-reserved IP, retrieve
+        the L4 load balancer IP: `kubectl -n cluster-services get service`.
+        It will be listed as the `EXTERNAL-IP`. Optionally reserve it
+        as a static IP in your VPC network configuration in the cloud
+        console, to prevent inadvertent loss.
 1. Create the [etcd cluster](https://docs.traefik.io/user-guide/kv-config/)
     for Traefik: `kubectl apply -f k8s/etcd.yml`.
     You may want to consider an etcd cluster backup or persistence
@@ -60,11 +65,6 @@ etcd store.
 1. Store the traefik config (replacing your hostmaster address
     for the default in the ACME config):
     `kubectl apply -f k8s/storeconfig.yml`.
-1. If you did not use a previously-reserved IP agove, retrieve
-    the L4 load balancer IP: `kubectl -n cluster-services get service`.
-    It will be listed as the `EXTERNAL-IP`. Optionally reserve it
-    as a static IP in your VPC network configuration in the cloud
-    console.
 1. Set a DNS record for rancher, on the load balancer IP. Place
     this hostname for `CATTLE_SERVER_URL` in `k8s/cattle.yml`,
     as well as in the ingress config in `k8s/traefik-controller.yml`.
