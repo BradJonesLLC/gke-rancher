@@ -40,9 +40,14 @@ etcd store.
     kubectl config set-context <context name> --user=<credentialname> --cluster=<full GKE cluster name>
     kubectl --context=<context name> apply -f k8s/cluster-admin.yml
     ```
-   Where `<full GKE cluster name>` is the name key of the cluster
-   entry in your `~/.kube/config` file, in the rough format of
-   `gke_PROJECTNAME_ZONE|REGION_CLUSTERNAME`.
+    Where `<full GKE cluster name>` is the name key of the cluster
+    entry in your `~/.kube/config` file, in the rough format of
+    `gke_PROJECTNAME_ZONE|REGION_CLUSTERNAME`.
+1. If you used basic auth credentials per above to create role
+    bindings, you may wish to set "Basic Authentication" to
+    Disabled in your cluster settings, at this point. Keep
+    in mind this may limit your ability to create cluster
+    role bindings for other purposes, in the future.
 1. Create the etcd operator (supervisor) and some basic cluster
     configuration: `kubectl apply -f k8s/cluster.yml`.
 1. Create the [etcd cluster](https://docs.traefik.io/user-guide/kv-config/)
