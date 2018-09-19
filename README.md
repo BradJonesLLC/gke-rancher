@@ -26,6 +26,10 @@ etcd store.
     settings for the cluster. It is not enabled by default.
 1. Download and install the GCP `gcloud` utility and `kubectl`,
     if you don't already have them.
+1. Fetch credentials for your cluster:
+    ```bash
+    gcloud container clusters get-credentials NAME [--region=REGION | --zone=ZONE, -z ZONE] [GCLOUD_WIDE_FLAG …]
+    ```
 1. Deploy the required cluster role bindings in `cluster-admin.yml`.
     This will require your GCP account to either have container
     service admin permissions, OR use admin credentials.
