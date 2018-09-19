@@ -59,15 +59,13 @@ etcd store.
 1. Validate in the Google Cloud console that all your workloads
     (including system objects) are in an OK status.
 1. If you are wishing to use Rancher's network policy features,
-    thee is [a bug](https://github.com/rancher/rancher/issues/14085)
-    relating to Rancher's assumptions around node annotations it
-    expects to find from Flannel. GKE uses Calico. The ticket is
-    currently scheduled for resolution on v2.0.8 but has been
-    postponed before. To work around this issue, set a fake annotation
-    on your cluster's nodes for this missing flannel annotation:
-    ```bash
-    kubectl annotate node --all flannel.alpha.coreos.com/public-ip=8.8.8.8
-    ```
+    there is [a ticket](https://github.com/rancher/rancher/issues/14085)
+    relating to Rancher's support for Calico in Rancher >= 2.0.8.
+    Prior to this version, it was possible to trick Rancher into
+    creating project-scoped network policy rules on Calico, but
+    [this was changed](https://github.com/rancher/rancher/releases/tag/v2.0.8)
+    and at the moment, network policies are only supported on RKE-
+    created clusters, and if you opt in.
 1. If you wish to use Google's cloud SQL with a proxy container,
     consult `k8s/mysql.yml` and [this documentation](https://cloud.google.com/sql/docs/mysql/connect-kubernetes-engine).
     You will need to create a JSON snippet of credentials and store
