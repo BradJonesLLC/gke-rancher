@@ -5,6 +5,11 @@ a GKE Kubernetes cluster, with Rancher 2.x as an orchestration
 layer, and a cluster-wide Traefik ingress behind a GCP Layer 4
 load balancer.
 
+**Important note:** This is a method appropriate for Rancher 2.x
+< 2.1. The supported installation to a target cluster is now
+via Helm. This repository will be updated accordingly, when my
+time allows.
+
 This may not represent the best practice for your organization
 or business requirements and no warranty is made regarding
 suitability. Use at your own risk and with due diligence as to
@@ -20,10 +25,11 @@ etcd store.
 
 ## Deploy steps
 
-1. Create a GKE cluster in the GCP web console or CLI. If you
-    wish to employ network policies on Calico, GKE's network
-    driver, select the Network Policy option in the advanced
-    settings for the cluster. It is not enabled by default.
+1. Create a GKE cluster in the GCP web console or CLI. Optionally
+    enable network policy (see note below, however) and disable
+    HTTP load balancing, as we will be doing our own via Traefik.
+    I also suggest disabling basic auth and client certificate
+    issuance.
 1. Download and install the GCP `gcloud` utility and `kubectl`,
     if you don't already have them.
 1. Fetch credentials for your cluster:
@@ -32,24 +38,30 @@ etcd store.
     ```
 1. Deploy the required cluster role bindings in `cluster-admin.yml`.
     This will require your GCP account to either have container
-    service admin permissions, OR use admin credentials.
-    As such:
-    ```bash
-    gcloud container clusters describe <cluster name> --zone <zone> | grep password
-    kubectl config set-credentials <credentialname> --username=admin --password=<password from above>
-    kubectl config set-context <context name> --user=<credentialname> --cluster=<full GKE cluster name>
-    kubectl --context=<context name> apply -f k8s/cluster-admin.yml
-    ```
-    Where `<full GKE cluster name>` is the name key of the cluster
-    entry in your `~/.kube/config` file, in the rough format of
-    `gke_PROJECTNAME_ZONE|REGION_CLUSTERNAME`.
-1. If you used basic auth credentials per above to create role
-    bindings, you may wish to set "Basic Authentication" to
-    Disabled in your cluster settings, at this point. Keep
-    in mind this may limit your ability to create cluster
-    role bindings for other purposes, in the future.
+    service admin permissions (preferred/easier), OR use admin credentials.
+    * Give your account admin permissions:
+        ```bash
+        kubectl create clusterrolebinding owner-cluster-admin-binding \
+            --clusterrole cluster-admin \
+            --user <account>
+        kubectl apply -f k8s/cluster-admin.yml
+        ```
+    * Use admin credentials:
+        ```bash
+        gcloud container clusters describe <cluster name> --zone <zone> | grep password
+        kubectl config set-credentials <credentialname> --username=admin --password=<password from above>
+        kubectl config set-context <context name> --user=<credentialname> --cluster=<full GKE cluster name>
+        kubectl --context=<context name> apply -f k8s/cluster-admin.yml
+        ```
+        Where `<full GKE cluster name>` is the name key of the cluster
+        entry in your `~/.kube/config` file, in the rough format of
+        `gke_PROJECTNAME_ZONE|REGION_CLUSTERNAME`.
+        
+        If you used basic auth credentials to create role
+        bindings, you may wish to set "Basic Authentication" to
+        Disabled in your cluster settings, at this point.
 1. Create the etcd operator (supervisor) and some basic cluster
-    configuration, including the L4 lod balancer:
+    configuration, including the L4 load balancer:
     `kubectl apply -f k8s/cluster.yml`. If you wish to use a
     previously-reserved static IP, specify `loadBalancerIP`
     in the [service spec](https://kubernetes.io/docs/concepts/services-networking/service/#loadbalancer).
@@ -66,8 +78,7 @@ etcd store.
     for the default in the ACME config):
     `kubectl apply -f k8s/storeconfig.yml`.
 1. Set a DNS record for rancher, on the load balancer IP. Place
-    this hostname for `CATTLE_SERVER_URL` in `k8s/cattle.yml`,
-    as well as in the ingress config in `k8s/traefik-controller.yml`.
+    this hostname for `CATTLE_SERVER_URL` in `k8s/cattle.yml`.
 1. Start Traefik: `kubectl apply -f k8s/traefik-controller.yml`.
 1. Start Rancher: `kubectl apply -f k8s/cattle.yml`.
 1. Log in to Rancher (which should now have a Let's Encrypt TLS
